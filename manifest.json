@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "JLC Auto Clicker",
+  "version": "1.0",
+  "description": "当点击扩展图标时，自动执行两次点击操作。",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_title": "JLC Auto Clicker",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "execute_click": {
+      "suggested_key": {
+        "default": "Alt+K"
+      },
+      "description": "执行自动点击 (kicad import)"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["content-script.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

@@ -5,14 +5,20 @@
   "description": "当点击扩展图标时，自动执行两次点击操作。",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "cookies"
   ],
   "action": {
     "default_title": "JLC Auto Clicker",
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "commands": {
     "execute_click": {
@@ -29,8 +35,12 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["content-script.js"],
+      "resources": ["content-script.js", "logger.js"],
       "matches": ["<all_urls>"]
     }
+  ],
+  "host_permissions": [
+    "*://*.jlc.com/*",
+    "http://127.0.0.1/*"
   ]
 }

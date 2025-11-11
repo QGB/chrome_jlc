@@ -1,6 +1,6 @@
+import './logger.js';
 console.log(" chrome_jlc\\background.js start 。。。");
 /**
- * 封装了执行点击脚本的核心逻辑。
  * 注入并执行内容脚本的核心逻辑。
  * @param {chrome.tabs.Tab} tab - 当前活动的标签页对象。
  */
@@ -9,7 +9,7 @@ function triggerClickOnTab(tab) {
   if (tab && tab.id && tab.url && (tab.url.startsWith("http") || tab.url.startsWith("https"))) {
     chrome.scripting.executeScript({
       target: { tabId: tab.id }, // 指定要注入脚本的标签页
-      files: ['content-script.js'], // 指定要注入的文件
+      files: ['logger.js', 'content-script.js'], // 先注入 logger，再注入内容脚本
     });
   } else {
     console.log("此扩展无法在当前页面上运行。");

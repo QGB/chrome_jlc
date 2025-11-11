@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>JLC Auto Clicker - 日志控制台</title>
+    <style>
+        body { font-family: monospace; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        h1 { padding: 10px 15px; margin: 0; background-color: #f0f0f0; border-bottom: 1px solid #ccc; }
+        #log-container { flex-grow: 1; overflow-y: auto; padding: 10px; background-color: #1e1e1e; color: #d4d4d4; white-space: pre-wrap; }
+        .log-error { color: #f48771; }
+        .log-info { color: #d4d4d4; }
+        .log-success { color: #8cc47f; }
+        #toolbar { padding: 10px; border-top: 1px solid #ccc; }
+        button { padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>JLC Auto Clicker - 日志控制台</h1>
+    <div id="toolbar">
+        <button id="clear-logs-btn">清空日志</button>
+    </div>
+    <div id="log-container"></div>
+
+    <script src="options.js"></script>
+</body>
+</html>

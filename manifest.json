@@ -6,7 +6,9 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "cookies"
+    "cookies",
+    "storage",
+    "tabs"
   ],
   "action": {
     "default_title": "JLC Auto Clicker",
@@ -16,6 +18,7 @@
     "service_worker": "background.js",
     "type": "module"
   },
+  "incognito": "split",
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true

@@ -52,12 +52,37 @@
                     const finalImportBtn = document.querySelector('#dlgImport > div.dialog-button > a:nth-child(1)');
                     if (finalImportBtn) {
                         finalImportBtn.click();
-                        console.log("JLC 扩展：[操作] 点击了最终的'导入'按钮。");
+                        console.log("JLC 扩展：[操作] 点击了'导入'弹窗的确认按钮。");
+
+                        // 步骤 5: 监视'选择库'弹窗
+                        console.log("JLC 扩展：[监视] 等待'选择库'弹窗的出现...");
+                        const chooseLibsObserver = new MutationObserver((libsMutations, libsObs) => {
+                            const chooseLibsDialog = document.querySelector('#dlgChooseLibs');
+                            if (chooseLibsDialog && chooseLibsDialog.style.display !== 'none') {
+                                console.log("JLC 扩展：[监视] 检测到'选择库'弹窗！");
+                                libsObs.disconnect();
+
+                                // 获取并记录文件名列表
+                                const filenames = Array.from(chooseLibsDialog.querySelectorAll('#chooseLibsTree .tree-title')).map(span => span.textContent);
+                                console.log("JLC 扩展：[信息] 检测到的库文件名列表:", filenames);
+
+                                // 点击'选择库'弹窗的确认按钮
+                                const chooseLibsConfirmBtn = document.querySelector('#dlgChooseLibs > div.dialog-button > a:nth-child(1)');
+                                if (chooseLibsConfirmBtn) {
+                                    chooseLibsConfirmBtn.click();
+                                    console.log("JLC 扩展：[操作] 点击了'选择库'弹窗的确认按钮。");
+                                }
+
+                                console.log("JLC 扩展：✅ 自动化流程已结束。");
+                                delete window.jlcAutomationRunning;
+                            }
+                        });
+                        chooseLibsObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+
                     } else {
-                        console.error("JLC 扩展：[失败] 未找到最终的'导入'按钮。");
+                        console.error("JLC 扩展：[失败] 未找到'导入'弹窗的确认按钮。");
+                        delete window.jlcAutomationRunning;
                     }
-                    console.log("JLC 扩展：✅ 自动化流程已结束。");
-                    delete window.jlcAutomationRunning;
                 }, 500); // 等待弹窗内元素渲染
             }
         });
@@ -71,7 +96,7 @@
                 console.log("JLC 扩展：[监视] 超时。用户可能已取消文件选择。流程中止。");
                 delete window.jlcAutomationRunning;
             }
-        }, 20000); // 20秒超时
+        }, 30000); // 30s 
 
     }, 500); // 等待确认框出现
 

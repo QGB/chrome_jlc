@@ -33,9 +33,10 @@
 <div class="menu-item">
     <button id="get-all-components-btn" style="width: 100%;">获取所有封装</button>
 </div>
-<div class="menu-item">
-    <input type="text" id="component-uuid-input" placeholder="输入要删除的封装UUID" style="width: 100%; box-sizing: border-box;">
-    <button id="delete-component-btn" style="width: 100%; margin-top: 5px;">删除封装</button>
+<!-- This container will be dynamically populated with a submenu for deleting footprints -->
+<div id="delete-footprint-container" class="menu-item" style="display: none;">
+    <div id="delete-footprint-header">删除封装 (点击选择)</div>
+    <div id="delete-footprint-submenu" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; margin-top: 5px; padding-top: 5px;"></div>
 </div>
 
 <script type="module" src="popup.js"></script>

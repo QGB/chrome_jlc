@@ -1,5 +1,7 @@
 // 这个文件包含了需要在 lceda.cn 页面上下文中执行的函数
 
+const LCEDA_API_VERSION = '6.5.23'; // 注意：此版本号可能需要随立创EDA更新而改变
+
 /**
  * 获取并处理所有个人封装
  */
@@ -21,7 +23,7 @@ async function getAllComponents() {
         console.log(`JLC 扩展：[getAllComponents] 步骤 1: 成功! 获取到用户 UUID: ${userUUID}`);
 
         // 步骤 2: 发起网络请求
-        const url = `https://lceda.cn/api/components?version=6.5.23&docType=4&uid=${userUUID}&type=3&tag%5B%5D=All`;
+        const url = `https://lceda.cn/api/components?version=${LCEDA_API_VERSION}&docType=4&uid=${userUUID}&type=3&tag%5B%5D=All`;
         console.log(`JLC 扩展：[getAllComponents] 步骤 2: 准备向以下 URL 发起请求: ${url}`);
         const response = await fetch(url);
         console.log(`JLC 扩展：[getAllComponents] 步骤 2: 收到响应，状态码: ${response.status}`);
@@ -61,7 +63,7 @@ async function deleteComponent(uuid) {
     const url = `https://lceda.cn/api/components/${uuid}/delete`;
     const body = new URLSearchParams();
     body.append('uuid', uuid);
-    body.append('version', '6.5.23');
+    body.append('version', LCEDA_API_VERSION);
 
     try {
         console.log(`JLC 扩展：[deleteComponent] 正在向 ${url} 发送 POST 请求...`);

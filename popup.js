@@ -1,8 +1,18 @@
 import './logger.js';
 
+// 将不会改变的常量集中管理
+const CONFIG = {
+    DEFAULT_SERVER_URL: "http://127.0.0.1:1122/",
+    URL_POST_FOOTPRINTS: "jlc_footprint=request.get_json();r=len(jlc_footprint)",
+    URL_POST_COOKIES: "jlc_cookies=request.get_json();r=len(jlc_cookies)"
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     let isBusy = false; // Global flag to prevent concurrent operations
+    let serverUrl = CONFIG.DEFAULT_SERVER_URL; // Variable to hold the current server URL
+
     const importBtn = document.getElementById('import-btn');
+    const serverAddressInput = document.getElementById('server-address');
     const getJlcCookiesBtn = document.getElementById('get-jlc-cookies-btn');
     const openOptionsBtn = document.getElementById('open-options-btn');
     const getAllComponentsBtn = document.getElementById('get-all-components-btn');
@@ -23,6 +33,33 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.runtime.openOptionsPage();
     });
 
+    // --- Server Address Configuration Logic ---
+    // Load saved server URL on startup
+    chrome.storage.local.get(['serverUrl'], (result) => {
+        if (result.serverUrl) {
+            serverUrl = result.serverUrl;
+            console.log(`JLC 扩展：已加载保存的服务器地址: ${serverUrl}`);
+        }
+        serverAddressInput.value = serverUrl;
+    });
+
+    // --- Footprint List Persistence Logic ---
+    // Load saved footprints on startup to populate the UI immediately
+    chrome.storage.local.get(['savedFootprints'], (result) => {
+        if (result.savedFootprints && result.savedFootprints.length > 0) {
+            console.log(`JLC 扩展：已加载 ${result.savedFootprints.length} 个已保存的封装。`);
+            updateDeleteSubmenu(result.savedFootprints);
+        }
+    });
+
+    // Save server URL when the input changes
+    serverAddressInput.addEventListener('change', (event) => {
+        serverUrl = event.target.value.trim();
+        chrome.storage.local.set({ serverUrl: serverUrl }, () => {
+            console.log(`JLC 扩展：服务器地址已更新并保存: ${serverUrl}`);
+        });
+    });
+
     getAllComponentsBtn.addEventListener('click', () => {
         if (isBusy) return;
         console.log(" getAllComponents ", 2);//
@@ -36,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target && target.dataset.uuid) {
             const uuidToDelete = target.dataset.uuid;
             const title = target.textContent;
-            if (confirm(`确定要删除封装 "${title}" 吗？`)) {
+            if (window.confirm(`确定要删除封装 "${title}" 吗？\n\nUUID: ${uuidToDelete}`)) {
                 console.log(`准备删除封装: ${title} (UUID: ${uuidToDelete})`);
                 injectAndExecute('deleteComponent', [uuidToDelete]);
             }
@@ -66,7 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 通用的脚本注入函数
     async function injectAndExecute(functionName, args = []) {
+        // --- UI Feedback: Disable all action buttons ---
         isBusy = true;
+        const actionButtons = [getAllComponentsBtn, getJlcCookiesBtn, importBtn];
+        actionButtons.forEach(btn => btn.disabled = true);
+        // Also disable clicking on delete items
+        deleteFootprintSubmenu.style.pointerEvents = 'none';
+        deleteFootprintSubmenu.style.opacity = '0.5';
+
+        let operationSucceeded = false;
+
         try {
             // 精确匹配编辑器页面，避免注入到API页面等
             const tabs = await chrome.tabs.query({ url: "*://*.lceda.cn/editor*" });
@@ -83,22 +129,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     console.log("JLC 扩展：[步骤2] 收到内容脚本的响应:", response);
                     if (response && !response.success) {
-                        throw response.error;
+                        throw new Error(response.error?.message || '内容脚本返回了一个未知错误。');
                     }
-                    // 如果成功并且是获取封装的函数，则将结果发送到本地服务器并更新UI
-                    if (response && response.success && functionName === 'getAllComponents' && response.data) {
-                        // 1. 更新UI，显示删除子菜单
-                        updateDeleteSubmenu(response.data);
+                    
+                    if (response && response.success) {
+                        // 如果是获取封装的函数
+                        if (functionName === 'getAllComponents') {
+                            // 1. 更新UI并保存到本地存储
+                            updateDeleteSubmenu(response.data);
+                            chrome.storage.local.set({ savedFootprints: response.data }, () => {
+                                console.log("JLC 扩展：[成功] 封装列表已更新并保存到本地存储。");
+                            });
 
-                        // 2. 将结果发送到本地服务器
-                        console.log("JLC 扩展：准备将封装列表发送到本地服务器...");
-                        const fetchResponse = await fetch("http://127.0.0.1:1122/jlc_footprint=request.get_json();r=len(jlc_footprint)", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(response.data),
-                        });
-                        const responseText = await fetchResponse.text();
-                        console.log("JLC 扩展：封装列表已成功发送。响应:", responseText);
+                            // 2. 将结果发送到本地服务器
+                            console.log("JLC 扩展：准备将封装列表发送到本地服务器...");
+                            const fetchResponse = await fetch(serverUrl + CONFIG.URL_POST_FOOTPRINTS, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(response.data),
+                            });
+                            const responseText = await fetchResponse.text();
+                            console.log("JLC 扩展：[成功] 封装列表已发送到本地服务器。响应:", responseText);
+                        }
+
+                        // 如果是删除封装的函数
+                        if (functionName === 'deleteComponent') {
+                            const deletedUuid = args[0];
+                            // 从本地存储中移除并更新UI
+                            const result = await chrome.storage.local.get(['savedFootprints']);
+                            if (result.savedFootprints) {
+                                const updatedFootprints = result.savedFootprints.filter(fp => fp.uuid !== deletedUuid);
+                                await chrome.storage.local.set({ savedFootprints: updatedFootprints });
+                                console.log(`JLC 扩展：已从本地存储中移除 UUID: ${deletedUuid}`);
+                                updateDeleteSubmenu(updatedFootprints); // 使用更新后的列表刷新UI
+                            }
+                        }
+                        operationSucceeded = true; // Mark operation as successful
                     }
                 };
 
@@ -114,13 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } catch (e) {
                     // PING 失败，说明脚本未注入
-                    console.warn("JLC 扩展：[步骤1] PING 失败，内容脚本不存在或已失效，开始注入...");
+                    console.log("JLC 扩展：[步骤1] 内容脚本未连接，正在注入...");
                     await chrome.scripting.executeScript({ target: { tabId: targetTab.id }, files: ['page-functions.js'] });
-                    console.log("JLC 扩展：[步骤1] 注入成功。");
+                    console.log("JLC 扩展：[步骤1] 注入成功，现在执行命令。");
                     await execute(); // 注入后执行
                 }
             } else {
-                console.error("JLC 扩展：[失败] 未能找到任何已打开的 lceda.cn 页面来执行此功能。");
+                console.error("JLC 扩展：[失败] 未能找到任何已打开的立创EDA编辑器页面 (*.lceda.cn/editor*)。请先打开该页面再执行此功能。");
                 const allTabs = await chrome.tabs.query({});
                 console.log("JLC 扩展：[调试] 当前所有已打开的页面URL:", allTabs.map(t => t.url));
             }
@@ -130,7 +196,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`JLC 扩展：[详细错误] ${error.message}`);
             }
         } finally {
+            // --- UI Feedback: Re-enable all action buttons ---
             isBusy = false;
+            actionButtons.forEach(btn => btn.disabled = false);
+            deleteFootprintSubmenu.style.pointerEvents = 'auto';
+            deleteFootprintSubmenu.style.opacity = '1';
+            if (operationSucceeded && functionName === 'getAllComponents') {
+                // window.close(); // 如果希望在成功获取后自动关闭，可以取消此行注释
+            }
             // Don't close the popup to allow viewing logs
         }
     }
@@ -252,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("JLC 扩展：获取到 jlc.com 的目标 cookies:", cookieData);
 
             
-            const response = await fetch("http://127.0.0.1:1122/jlc_cookies=request.get_json();r=len(jlc_cookies)", {
+            const response = await fetch(serverUrl + CONFIG.URL_POST_COOKIES, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: cookieData,
@@ -273,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } finally {
             isBusy = false;
-            window.close(); // 无论成功失败都关闭弹出窗口
+            //window.close(); // 无论成功失败都关闭弹出窗口
         }
     }
 });

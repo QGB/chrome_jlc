@@ -8,16 +8,16 @@ function overrideConsole() {
   const originalConsoleError = console.error;
 
   function sendLog(level, args) {
-    const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' ');
+    // 格式化消息以便在 options 页面中更好地显示
+    const formattedMessage = args.map(arg => {
+        if (typeof arg === 'object' && arg !== null) {
+            try { return JSON.stringify(arg, null, 2); } catch (e) { return '[Unserializable Object]'; }
+        }
+        return String(arg);
+    }).join(' ');
 
     // 1. 发送消息到 options 页面（如果页面打开了）
-    chrome.runtime.sendMessage({
-      type: 'JLC_LOG',
-      payload: {
-        level: level,
-        message: message
-      }
-    }).catch(error => {
+    chrome.runtime.sendMessage({ type: 'JLC_LOG', payload: { level, message: formattedMessage, originalArgs: args } }).catch(error => {
       // 如果 options 页面未打开，会有一个错误，我们忽略它
     });
 

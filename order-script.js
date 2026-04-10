@@ -12,33 +12,13 @@
     console.log("JLC 扩展：当前页面URL:", window.location.href);
 
     // 定义需要自动选择的按钮配置列表
-    const buttonConfigs = [
-        {
-            id: 'isNeedOrderSMT_no',
-            description: '不需要SMT',
-            fallbackSelector: "input[type='radio'][name='isNeedOrderSMT']",
-            fallbackIndex: 1
-        },
-        {
-            id: 'isNeedOrderSteel_no',
-            description: '不需要钢网'
-        },
-        {
-            id:'express_yufu_0',
-            description: '顺丰电商标快'
-        },
-        {
-            id: 'bingdDelivery_2',
-            description: '快递方式2'
-        },
-        {
-            id: 'confirmProductionFile_no',
-            description: '确认生产文件'
-        },
-        {
-            id: 'isConfirmStatus_yes',
-            description: '确认状态'
-        }
+    const buttonConfigs =  [        
+        { id: 'confirmProductionFile_no', description: '确认生产文件' },
+        { id: 'isNeedOrderSMT_no', description: '不需要SMT' },
+        { id: 'isNeedOrderSteel_no', description: '不需要钢网' },
+        { id: 'express_yufu_0', description: '顺丰电商标快' },
+        { id: 'bingdDelivery_2', description: '不同交期订单不一起发货' },
+        { id: 'isConfirmStatus_yes', description: '确认状态' }
     ];
 
     /**
@@ -99,8 +79,7 @@
         
         const couponButtonSelector = '#app > div:nth-child(1) > div:nth-child(2) > div:nth-child(30) > div > div.el-dialog__body > div > div.coupon-wrap.flex.flex-wrap > div > div.pd-x-16.pd-y-12 > div > button';
         const couponButton = document.querySelector(couponButtonSelector);
-        
-        if (couponButton) {
+        if(couponButton){
             console.log("JLC 扩展：[优惠券] 找到优惠券按钮:", couponButton);
             console.log("JLC 扩展：[优惠券] 按钮文本:", couponButton.textContent);
             console.log("JLC 扩展：[优惠券] 按钮状态:", {
@@ -114,24 +93,13 @@
             } else {
                 console.log("JLC 扩展：[跳过] 优惠券按钮不可用或不可见。");
             }
-        } else {
-            console.log("JLC 扩展：[信息] 未找到优惠券按钮，可能没有可用优惠券或弹窗未出现。");
-            
-            // 尝试更通用的选择器作为备选方案
-            const fallbackCouponButtons = document.querySelectorAll('button');
-            const couponButtonByText = Array.from(fallbackCouponButtons).find(btn => 
-                btn.textContent && btn.textContent.includes('立即使用')
-            );
-            
-            if (couponButtonByText) {
-                console.log("JLC 扩展：[备选方案] 通过文本找到优惠券按钮:", couponButtonByText);
-                couponButtonByText.click();
-                console.log("JLC 扩展：[成功] 通过备选方案点击了优惠券按钮。");
-            }
         }
-        
-        // 完成所有操作
-        console.log("JLC 扩展：✅ 下单自动化流程已结束。");
-        delete window.jlcOrderAutomationRunning;
+
+        document.querySelector("#app > div:nth-child(1) > div:nth-child(2) > div:nth-child(30) > div > div.el-dialog__header > button > i").click();//close
     }
+        
+    // 完成所有操作
+    console.log("JLC 扩展：✅ 下单自动化流程已结束。");
+    delete window.jlcOrderAutomationRunning;
+    
 })();

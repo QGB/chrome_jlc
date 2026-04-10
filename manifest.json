@@ -29,6 +29,12 @@
         "default": "Alt+K"
       },
       "description": "执行自动点击 (kicad import)"
+    },
+    "execute_order": {
+      "suggested_key": {
+        "default": "Alt+O"
+      },
+      "description": "执行订单自动选择"
     }
   },
   "icons": {
@@ -38,7 +44,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["content-script.js", "logger.js", "page-functions.js"],
+      "resources": ["content-script.js", "logger.js", "page-functions.js", "order-script.js", "auto-order-detector.js"],
       "matches": ["<all_urls>"]
     }
   ],
@@ -46,5 +52,12 @@
     "*://*.jlc.com/*",
     "*://*.lceda.cn/*",
     "http://127.0.0.1/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.jlc.com/*"],
+      "js": ["logger.js", "auto-order-detector.js"],
+      "run_at": "document_end"
+    }
   ]
 }

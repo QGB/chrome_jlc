@@ -1,4 +1,3 @@
-import './logger.js';
 
 // 将不会改变的常量集中管理
 const CONFIG = {
@@ -12,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let serverUrl = CONFIG.DEFAULT_SERVER_URL; // Variable to hold the current server URL
 
     const importBtn = document.getElementById('import-btn');
+    const orderBtn = document.getElementById('order-btn');
     const serverAddressInput = document.getElementById('server-address');
     const getJlcCookiesBtn = document.getElementById('get-jlc-cookies-btn');
     const openOptionsBtn = document.getElementById('open-options-btn');
@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
     importBtn.addEventListener('click', () => {
         if (isBusy) return;
         executeContentScript();
+    });
+
+    orderBtn.addEventListener('click', () => {
+        if (isBusy) return;
+        executeOrderScript();
     });
 
     getJlcCookiesBtn.addEventListener('click', () => {
@@ -101,11 +106,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // 封装执行 order-script 的逻辑
+    async function executeOrderScript() {
+        isBusy = true;
+        try {
+            const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (currentTab) {
+                await chrome.scripting.executeScript({
+                    target: { tabId: currentTab.id },
+                    files: ['logger.js', 'order-script.js'],
+                });
+            } else {
+                console.error("JLC 扩展：未找到当前活动标签页。");
+            }
+        } catch (error) {
+            console.error("JLC 扩展：执行订单脚本失败:", error);
+        } finally {
+            isBusy = false;
+            window.close();
+        }
+    }
+
     // 通用的脚本注入函数
     async function injectAndExecute(functionName, args = []) {
         // --- UI Feedback: Disable all action buttons ---
         isBusy = true;
-        const actionButtons = [getAllComponentsBtn, getJlcCookiesBtn, importBtn];
+        const actionButtons = [getAllComponentsBtn, getJlcCookiesBtn, importBtn, orderBtn];
         actionButtons.forEach(btn => btn.disabled = true);
         // Also disable clicking on delete items
         deleteFootprintSubmenu.style.pointerEvents = 'none';

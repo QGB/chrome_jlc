@@ -1,4 +1,4 @@
-//import './logger.js';
+import './logger.js';
 console.log(" chrome_jlc\\background.js start 。。。");
 /**
  * 注入并执行内容脚本的核心逻辑。

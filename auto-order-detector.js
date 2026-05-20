@@ -29,7 +29,7 @@
     // 主要检测逻辑
     function startAutoDetection() {
         console.log("JLC 扩展：[自动检测] 开始监听订单页面...");
-        ms=11000
+        ms=15000
         // 检查当前页面
         if (isOrderPage()) {
             console.log("JLC 扩展：[自动检测] 当前页面匹配订单页面，等待"+(ms/1000)+"秒后执行...");
